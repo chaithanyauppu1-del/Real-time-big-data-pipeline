@@ -1,0 +1,11 @@
+.venv/
+venv/
+ENV/
+__pycache__/
+*.py[cod]
+*$py.class
+.DS_Store
+.vscode/
+.idea/
+data/stream_state.json
+data/processed_transactions.csv

@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-Time Big Data Analytics Pipeline</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Top Navbar -->
+        <header class="navbar">
+            <div class="logo-group">
+                <i class="fa-solid fa-chart-line logo-icon"></i>
+                <div class="logo-text">
+                    <h1>Real-Time Analytics Dashboard</h1>
+                    <p>Big Data Micro-Batch Processing & Anomaly Detection</p>
+                </div>
+            </div>
+            
+            <div class="stream-controls">
+                <div class="control-group">
+                    <button id="btn-toggle" class="btn btn-success"><i class="fa-solid fa-play"></i> Start Stream</button>
+                    <button id="btn-pause" class="btn btn-warning"><i class="fa-solid fa-pause"></i> Pause</button>
+                    <button id="btn-reset" class="btn btn-secondary"><i class="fa-solid fa-rotate-right"></i> Reset</button>
+                </div>
+                
+                <div class="speed-control">
+                    <label for="speed-range"><i class="fa-solid fa-gauge-high"></i> Speed:</label>
+                    <input type="range" id="speed-range" min="0.1" max="2.0" step="0.1" value="1.0">
+                    <span id="speed-label">1.0s</span>
+                </div>
+
+                <div class="live-badge" id="stream-status-badge">
+                    <span class="status-dot green"></span> LIVE STREAM
+                </div>
+            </div>
+        </header>
+
+        <!-- Navigation Tabs -->
+        <nav class="tab-nav">
+            <button class="tab-btn active" data-tab="tab-overview">
+                <i class="fa-solid fa-gauge-high"></i> Overview & KPIs
+            </button>
+            <button class="tab-btn" data-tab="tab-analytics">
+                <i class="fa-solid fa-chart-column"></i> Visual Analytics
+            </button>
+            <button class="tab-btn" data-tab="tab-transactions">
+                <i class="fa-solid fa-list-check"></i> Live Stream Feed
+            </button>
+            <button class="tab-btn" data-tab="tab-anomalies">
+                <i class="fa-solid fa-shield-virus"></i> Anomaly Alerts
+            </button>
+            <button class="tab-btn" data-tab="tab-export">
+                <i class="fa-solid fa-database"></i> Data & Export
+            </button>
+        </nav>
+
+        <!-- Global Search & Filter Bar -->
+        <section class="filter-bar">
+            <div class="filter-group search-box">
+                <i class="fa-solid fa-magnifying-glass filter-icon"></i>
+                <input type="text" id="search-input" placeholder="Search by Invoice No or Product Description...">
+            </div>
+            
+            <div class="filter-group">
+                <label for="filter-country"><i class="fa-solid fa-globe"></i> Country:</label>
+                <select id="filter-country">
+                    <option value="">All Countries</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label for="filter-status"><i class="fa-solid fa-filter"></i> Status:</label>
+                <select id="filter-status">
+                    <option value="">All Statuses</option>
+                    <option value="anomaly">Anomalies Only</option>
+                    <option value="normal">Normal Only</option>
+                    <option value="cancel">Cancellations Only</option>
+                </select>
+            </div>
+
+            <button id="btn-clear-filters" class="btn btn-secondary"><i class="fa-solid fa-xmark"></i> Clear Filters</button>
+        </section>
+
+        <!-- TAB 1: OVERVIEW & KPIS -->
+        <main id="tab-overview" class="tab-pane active">
+            <!-- KPI Cards Grid -->
+            <section class="kpi-grid">
+                <div class="kpi-card accent-blue">
+                    <div class="kpi-header">
+                        <span>Total Revenue</span>
+                        <i class="fa-solid fa-dollar-sign kpi-icon"></i>
+                    </div>
+                    <div class="kpi-value" id="kpi-revenue">$0.00</div>
+                    <div class="kpi-subtext"><i class="fa-solid fa-trend-up"></i> Micro-batch accumulated</div>
+                </div>
+
+                <div class="kpi-card accent-purple">
+                    <div class="kpi-header">
+                        <span>Total Transactions</span>
+                        <i class="fa-solid fa-receipt kpi-icon"></i>
+                    </div>
+                    <div class="kpi-value" id="kpi-transactions">0</div>
+                    <div class="kpi-subtext"><i class="fa-solid fa-layer-group"></i> Total processed rows</div>
+                </div>
+
+                <div class="kpi-card accent-cyan">
+                    <div class="kpi-header">
+                        <span>Avg Transaction Value</span>
+                        <i class="fa-solid fa-scale-balanced kpi-icon"></i>
+                    </div>
+                    <div class="kpi-value" id="kpi-avg-value">$0.00</div>
+                    <div class="kpi-subtext"><i class="fa-solid fa-chart-pie"></i> Per order average</div>
+                </div>
+
+                <div class="kpi-card accent-amber">
+                    <div class="kpi-header">
+                        <span>Units Sold</span>
+                        <i class="fa-solid fa-boxes-stacked kpi-icon"></i>
+                    </div>
+                    <div class="kpi-value" id="kpi-units">0</div>
+                    <div class="kpi-subtext"><i class="fa-solid fa-cart-shopping"></i> Valid product items</div>
+                </div>
+
+                <div class="kpi-card accent-rose">
+                    <div class="kpi-header">
+                        <span>Anomalies Flagged</span>
+                        <i class="fa-solid fa-triangle-exclamation kpi-icon"></i>
+                    </div>
+                    <div class="kpi-value" id="kpi-anomalies">0</div>
+                    <div class="kpi-subtext"><i class="fa-solid fa-shield-halved"></i> Isolation Forest alerts</div>
+                </div>
+
+                <div class="kpi-card accent-emerald">
+                    <div class="kpi-header">
+                        <span>Throughput Rate</span>
+                        <i class="fa-solid fa-bolt kpi-icon"></i>
+                    </div>
+                    <div class="kpi-value" id="kpi-throughput">0.0 rec/s</div>
+                    <div class="kpi-subtext" id="kpi-throughput-subtext"><i class="fa-solid fa-microchip"></i> Real-time latency</div>
+                </div>
+
+                <div class="kpi-card accent-purple">
+                    <div class="kpi-header">
+                        <span>Avg Processing Latency</span>
+                        <i class="fa-solid fa-clock kpi-icon"></i>
+                    </div>
+                    <div class="kpi-value" id="kpi-latency">0.0 ms</div>
+                    <div class="kpi-subtext"><i class="fa-solid fa-stopwatch"></i> Feature eng & ML infer time</div>
+                </div>
+
+                <div class="kpi-card accent-blue">
+                    <div class="kpi-header">
+                        <span>Source Dataset Scale</span>
+                        <i class="fa-solid fa-database kpi-icon"></i>
+                    </div>
+                    <div class="kpi-value" id="kpi-dataset-scale">0 records</div>
+                    <div class="kpi-subtext"><i class="fa-solid fa-rotate"></i> Simulated micro-batch stream</div>
+                </div>
+            </section>
+
+            <!-- Main Revenue Timeline -->
+            <section class="overview-chart-section">
+                <div class="chart-card full-width">
+                    <div class="card-title">
+                        <i class="fa-solid fa-chart-line"></i> Revenue per Micro-Batch ($) Timeline
+                    </div>
+                    <div class="chart-container large-container">
+                        <canvas id="chart-revenue"></canvas>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- TAB 2: VISUAL ANALYTICS -->
+        <main id="tab-analytics" class="tab-pane">
+            <section class="charts-grid-analytics">
+                <div class="chart-card">
+                    <div class="card-title">
+                        <i class="fa-solid fa-earth-americas"></i> Top 5 Revenue by Country
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="chart-country"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-card">
+                    <div class="card-title">
+                        <i class="fa-solid fa-cubes"></i> Order Quantity Volume Stream
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="chart-volume"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-card full-width">
+                    <div class="card-title">
+                        <i class="fa-solid fa-shield-virus"></i> Isolation Forest Anomaly Score Trend
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="chart-anomaly-scores"></canvas>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- TAB 3: LIVE STREAM FEED -->
+        <main id="tab-transactions" class="tab-pane">
+            <section class="table-section">
+                <div class="table-card full-width">
+                    <div class="card-title">
+                        <i class="fa-solid fa-list-check"></i> Live Stream Transaction Feed (Latest Processed Micro-Batches)
+                    </div>
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Invoice</th>
+                                    <th>Timestamp</th>
+                                    <th>Type</th>
+                                    <th>Description</th>
+                                    <th>Qty</th>
+                                    <th>Price</th>
+                                    <th>Total Revenue</th>
+                                    <th>Country</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="table-transactions-body">
+                                <tr><td colspan="9" class="text-center text-muted">Awaiting stream data...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- TAB 4: ANOMALY ALERTS -->
+        <main id="tab-anomalies" class="tab-pane">
+            <section class="table-section">
+                <div class="table-card full-width">
+                    <div class="card-title text-rose">
+                        <i class="fa-solid fa-triangle-exclamation"></i> Isolation Forest & Rule-Based Anomaly Detection Log
+                    </div>
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Invoice</th>
+                                    <th>Timestamp</th>
+                                    <th>Type</th>
+                                    <th>Anomaly Type</th>
+                                    <th>Explanation</th>
+                                    <th>Anomaly Score <i class="fa-solid fa-circle-info" style="cursor:pointer;" title="Anomaly Score indicates how unusual a transaction is relative to the patterns learned by the Isolation Forest model. Higher values indicate greater anomaly severity according to the scoring method used by this system."></i></th>
+                                    <th>Severity</th>
+                                    <th>Qty</th>
+                                    <th>Price</th>
+                                    <th>Total Value</th>
+                                </tr>
+                            </thead>
+                            <tbody id="table-anomalies-body">
+                                <tr><td colspan="10" class="text-center text-muted">No anomalies detected yet.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- TAB 5: DATA & EXPORT -->
+        <main id="tab-export" class="tab-pane">
+            <section class="export-section">
+                <div class="export-card">
+                    <div class="export-header">
+                        <i class="fa-solid fa-file-csv export-icon"></i>
+                        <div>
+                            <h3>Export Generated Processed Transactions</h3>
+                            <p>Download all cleaned transactions, engineered features, and ML anomaly scores in CSV format.</p>
+                        </div>
+                    </div>
+                    <div class="export-actions">
+                        <a href="/api/download/csv" class="btn btn-info btn-large" download><i class="fa-solid fa-download"></i> Download CSV File</a>
+                    </div>
+                </div>
+
+                <div class="storage-info-grid">
+                    <div class="storage-card">
+                        <i class="fa-solid fa-database storage-icon"></i>
+                        <h4>SQLite Database Storage</h4>
+                        <p>File path: <code>data/pipeline_storage.db</code></p>
+                        <span class="badge badge-normal">Active & Persistent</span>
+                    </div>
+                    <div class="storage-card">
+                        <i class="fa-solid fa-file-lines storage-icon"></i>
+                        <h4>CSV Output Dataset</h4>
+                        <p>File path: <code>data/processed_transactions.csv</code></p>
+                        <span class="badge badge-normal">Real-Time Appended</span>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="{{ url_for('static', filename='dashboard.js') }}"></script>
+</body>
+</html>
